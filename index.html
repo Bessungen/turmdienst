@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turmdienst – Schichtplan</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .container { max-width: 640px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: 0.5px solid #c8c7be;
+    background: transparent;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 14px;
+    color: #1a1a18;
+    transition: background 0.15s;
+  }
+  button:hover { background: #eceae3; }
+  button.primary {
+    background: #1a1a18;
+    color: #fff;
+    border-color: #1a1a18;
+  }
+  button.primary:hover { background: #333; }
+  button.danger { border-color: #e24b4a; color: #e24b4a; }
+  button.danger:hover { background: #fcebeb; }
+  input, select {
+    font-family: inherit;
+    font-size: 14px;
+    border: 0.5px solid #c8c7be;
+    border-radius: 8px;
+    padding: 8px 10px;
+    width: 100%;
+    background: #fff;
+    color: #1a1a18;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #888;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.06);
+  }
+  .card {
+    background: #fff;
+    border: 0.5px solid #dddcd5;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .badge-open { background: #eaf3de; color: #3b6d11; }
+  .badge-closed { background: #f1efe8; color: #5f5e5a; }
+  .tab-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    border-bottom: 0.5px solid #dddcd5;
+    padding-bottom: 0.75rem;
+  }
+  .tab {
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tab.active { background: #1a1a18; color: #fff; }
+  .tab:not(.active) { background: transparent; color: #888780; }
+  .section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #888780;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+  }
+  .shift-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 0.5px solid #eceae3;
+  }
+  .shift-row:last-child { border-bottom: none; }
+  .name-pill {
+    background: #f5f4f0;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .time-pill {
+    background: #e6f1fb;
+    color: #185fa5;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+  .week-label { font-weight: 500; font-size: 15px; flex: 1; text-align: center; }
+  .day-block {
+    border: 0.5px solid #dddcd5;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+  }
+  .day-header {
+    padding: 10px 1.25rem;
+    background: #f5f4f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .day-title { font-weight: 500; font-size: 14px; }
+  .day-body { padding: 0.75rem 1.25rem; }
+  .empty-hint { font-size: 13px; color: #b4b2a9; font-style: italic; padding: 4px 0; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .form-row > * { flex: 1; }
+  .pin-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
+    text-align: center;
+  }
+  .public-header { text-align: center; padding: 1rem 1rem 1.5rem; }
+  .public-title { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .public-subtitle { font-size: 14px; color: #888780; }
+  .public-day {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid #eceae3;
+  }
+  .public-day:last-child { border-bottom: none; }
+  .public-day-date { min-width: 82px; }
+  .public-day-dayname { font-weight: 500; font-size: 14px; }
+  .public-day-datestr { font-size: 12px; color: #888780; }
+  .public-shifts { flex: 1; }
+  .public-shift-entry { font-size: 13px; margin-bottom: 3px; }
+  .no-shifts-hint { font-size: 13px; color: #b4b2a9; font-style: italic; }
+  .qr-hint {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f5f4f0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #888780;
+  }
+  .success-msg {
+    background: #eaf3de;
+    color: #3b6d11;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  h2.section-title { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .app-header-icon { font-size: 28px; }
+  .app-header-title { font-size: 20px; font-weight: 500; }
+  .app-header-sub { font-size: 13px; color: #888780; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app-header">
+    <div class="app-header-icon"><i class="ti ti-tower" aria-hidden="true"></i></div>
+    <div>
+      <div class="app-header-title">Turmdienst</div>
+      <div class="app-header-sub">Schicht- &amp; Öffnungsplan</div>
+    </div>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script>
+// ── Konfiguration ──────────────────────────────────────────
+const PIN = "1234";          // ← PIN hier ändern
+const VEREINSNAME = "Unser Verein";   // ← Vereinsname hier anpassen
+const STORAGE_KEY = "turmdienst_v2";
+// ──────────────────────────────────────────────────────────
+
+function loadData() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : {}; }
+  catch(e) { return {}; }
+}
+function saveData(d) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e) {}
+}
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff); d.setHours(0,0,0,0); return d;
+}
+function getSaturday(m) { const d = new Date(m); d.setDate(d.getDate()+5); return d; }
+function getSunday(m)   { const d = new Date(m); d.setDate(d.getDate()+6); return d; }
+function isoDate(d) { return d.toISOString().split('T')[0]; }
+function formatDate(d) { return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}); }
+function formatDateShort(d) { return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'}); }
+function getKW(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dn = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dn);
+  const ys = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - ys) / 86400000) + 1) / 7);
+}
+function weekLabel(monday) {
+  const sat = getSaturday(monday), sun = getSunday(monday);
+  return `KW ${getKW(monday)} · ${formatDateShort(sat)} & ${formatDateShort(sun)}.${sat.getFullYear()}`;
+}
+
+let S = {
+  view: "public",
+  pinAuthenticated: false,
+  pinInput: "",
+  pinError: false,
+  currentWeekMonday: getMonday(new Date()),
+  memberWeekMonday: getMonday(new Date()),
+  formName: "",
+  formFrom: "",
+  formTo: "",
+  formDayOffset: 5,
+  successMsg: "",
+  data: loadData()
+};
+
+function setState(u) { Object.assign(S, u); render(); }
+
+function addShift() {
+  if (!S.formName.trim()) { alert("Bitte einen Namen eingeben."); return; }
+  const monday = new Date(S.memberWeekMonday);
+  const shiftDate = new Date(monday);
+  shiftDate.setDate(monday.getDate() + parseInt(S.formDayOffset));
+  const key = isoDate(shiftDate);
+  if (!S.data[key]) S.data[key] = [];
+  S.data[key].push({ name: S.formName.trim(), from: S.formFrom, to: S.formTo, id: Date.now() });
+  saveData(S.data);
+  const name = S.formName.trim();
+  setState({ data: S.data, formName: "", formFrom: "", formTo: "", successMsg: `✓ ${name} wurde eingetragen!` });
+  setTimeout(() => setState({ successMsg: "" }), 3000);
+}
+
+function removeShift(dateKey, id) {
+  if (!confirm("Eintrag wirklich löschen?")) return;
+  if (S.data[dateKey]) {
+    S.data[dateKey] = S.data[dateKey].filter(s => s.id !== id);
+    saveData(S.data);
+    setState({ data: S.data });
+  }
+}
+
+function renderPublicView() {
+  const weeks = [];
+  for (let w = 0; w < 4; w++) {
+    const m = new Date(S.currentWeekMonday);
+    m.setDate(m.getDate() + w * 7);
+    weeks.push(m);
+  }
+  const weekBlocks = weeks.map(monday => {
+    const sat = getSaturday(monday), sun = getSunday(monday);
+    const satShifts = S.data[isoDate(sat)] || [];
+    const sunShifts = S.data[isoDate(sun)] || [];
+    const dayHtml = (name, dateObj, shifts) => {
+      const list = shifts.length
+        ? shifts.map(s => `<div class="public-shift-entry"><i class="ti ti-user" style="font-size:13px;vertical-align:-1px;margin-right:4px;" aria-hidden="true"></i>${s.name}${s.from && s.to ? ` <span style="color:#888780;font-size:12px;">${s.from}–${s.to} Uhr</span>` : ''}</div>`).join('')
+        : `<div class="no-shifts-hint">Noch niemand eingetragen</div>`;
+      const badge = shifts.length
+        ? `<span class="badge badge-open"><i class="ti ti-check" aria-hidden="true"></i> Geöffnet</span>`
+        : `<span class="badge badge-closed"><i class="ti ti-clock" aria-hidden="true"></i> Offen</span>`;
+      return `<div class="public-day">
+        <div class="public-day-date">
+          <div class="public-day-dayname">${name}</div>
+          <div class="public-day-datestr">${formatDate(dateObj)}</div>
+        </div>
+        <div class="public-shifts">${list}</div>
+        <div>${badge}</div>
+      </div>`;
+    };
+    return `<div class="card" style="margin-bottom:0.75rem;">
+      <div style="font-size:12px;font-weight:500;color:#888780;margin-bottom:0.75rem;">KW ${getKW(monday)} — ${formatDateShort(sat)}. &amp; ${formatDateShort(sun)}.${sat.getFullYear()}</div>
+      ${dayHtml("Samstag", sat, satShifts)}
+      ${dayHtml("Sonntag", sun, sunShifts)}
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="public-header">
+      <div style="font-size:40px;margin-bottom:8px;"><i class="ti ti-tower" aria-hidden="true"></i></div>
+      <div class="public-title">Turm-Öffnungszeiten</div>
+      <div class="public-subtitle">${VEREINSNAME} · Nächste 4 Wochen</div>
+    </div>
+    ${weekBlocks}
+    <div class="qr-hint"><i class="ti ti-info-circle" aria-hidden="true"></i> Eintragungen durch Vereinsmitglieder. Stand: täglich aktuell.</div>`;
+}
+
+function renderMemberView() {
+  if (!S.pinAuthenticated) {
+    return `<div class="pin-overlay">
+      <div style="font-size:48px;color:#b4b2a9;"><i class="ti ti-lock" aria-hidden="true"></i></div>
+      <div>
+        <div style="font-weight:500;font-size:16px;margin-bottom:4px;">Mitglieder-Bereich</div>
+        <div style="font-size:13px;color:#888780;">PIN eingeben, um fortzufahren</div>
+      </div>
+      <input id="pin-field" type="password" inputmode="numeric" maxlength="8" placeholder="••••"
+        style="max-width:160px;text-align:center;font-size:22px;letter-spacing:0.25em;"
+        onkeydown="if(event.key==='Enter')checkPin()" />
+      ${S.pinError ? `<div style="color:#e24b4a;font-size:13px;"><i class="ti ti-alert-circle" aria-hidden="true"></i> Falsche PIN</div>` : ''}
+      <button class="primary" onclick="checkPin()" style="padding:9px 28px;">
+        <i class="ti ti-arrow-right" aria-hidden="true"></i> Einloggen
+      </button>
+    </div>`;
+  }
+
+  const monday = new Date(S.memberWeekMonday);
+  const sat = getSaturday(monday), sun = getSunday(monday);
+  const satShifts = S.data[isoDate(sat)] || [];
+  const sunShifts = S.data[isoDate(sun)] || [];
+
+  const renderDay = (dayName, dateObj, shifts) => {
+    const key = isoDate(dateObj);
+    const rows = shifts.length
+      ? shifts.map(s => `<div class="shift-row">
+          <span class="name-pill"><i class="ti ti-user" style="font-size:13px;vertical-align:-1px;margin-right:4px;" aria-hidden="true"></i>${s.name}</span>
+          ${s.from && s.to ? `<span class="time-pill">${s.from}–${s.to}</span>` : ''}
+          <button class="danger" onclick="removeShift('${key}',${s.id})" style="padding:5px 9px;font-size:13px;" title="Löschen"><i class="ti ti-trash" aria-hidden="true"></i></button>
+        </div>`).join('')
+      : `<div class="empty-hint">Noch niemand eingetragen</div>`;
+    const badge = shifts.length ? `<span class="badge badge-open"><i class="ti ti-check" aria-hidden="true"></i> ${shifts.length}</span>` : '';
+    return `<div class="day-block">
+      <div class="day-header">
+        <span class="day-title">${dayName}, ${formatDate(dateObj)}</span>
+        ${badge}
+      </div>
+      <div class="day-body">${rows}</div>
+    </div>`;
+  };
+
+  const satDayOpt = formatDateShort(sat);
+  const sunDayOpt = formatDateShort(sun);
+
+  return `
+    <h2 class="section-title"><i class="ti ti-calendar" aria-hidden="true" style="margin-right:6px;"></i>Schichtplan bearbeiten</h2>
+    <div class="week-nav">
+      <button onclick="prevWeek()"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+      <span class="week-label">${weekLabel(monday)}</span>
+      <button onclick="nextWeek()"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+    </div>
+    ${renderDay("Samstag", sat, satShifts)}
+    ${renderDay("Sonntag", sun, sunShifts)}
+    <div class="card" style="margin-top:1.25rem;">
+      <h2 class="section-title"><i class="ti ti-plus" aria-hidden="true" style="margin-right:6px;"></i>Neuen Eintrag hinzufügen</h2>
+      ${S.successMsg ? `<div class="success-msg">${S.successMsg}</div>` : ''}
+      <div class="form-row">
+        <div>
+          <div class="section-label">Tag</div>
+          <select onchange="setState({formDayOffset:parseInt(this.value)})">
+            <option value="5" ${S.formDayOffset==5?'selected':''}>Samstag, ${satDayOpt}.</option>
+            <option value="6" ${S.formDayOffset==6?'selected':''}>Sonntag, ${sunDayOpt}.</option>
+          </select>
+        </div>
+        <div>
+          <div class="section-label">Name</div>
+          <input type="text" placeholder="Dein Name" value="${S.formName}" oninput="setState({formName:this.value})"
+            onkeydown="if(event.key==='Enter')addShift()" />
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:1rem;">
+        <div>
+          <div class="section-label">Von (optional)</div>
+          <input type="time" value="${S.formFrom}" onchange="setState({formFrom:this.value})" />
+        </div>
+        <div>
+          <div class="section-label">Bis (optional)</div>
+          <input type="time" value="${S.formTo}" onchange="setState({formTo:this.value})" />
+        </div>
+      </div>
+      <button class="primary" onclick="addShift()" style="width:100%;padding:10px;">
+        <i class="ti ti-plus" aria-hidden="true"></i> Eintragen
+      </button>
+    </div>
+    <div style="margin-top:1rem;text-align:right;">
+      <button onclick="setState({pinAuthenticated:false})" style="font-size:13px;color:#888780;">
+        <i class="ti ti-logout" aria-hidden="true"></i> Ausloggen
+      </button>
+    </div>`;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const tabs = `<div class="tab-bar">
+    <button class="tab ${S.view==='public'?'active':''}" onclick="setState({view:'public'})">
+      <i class="ti ti-eye" aria-hidden="true" style="margin-right:4px;"></i>Gäste-Ansicht
+    </button>
+    <button class="tab ${S.view==='member'?'active':''}" onclick="setState({view:'member'})">
+      <i class="ti ti-users" aria-hidden="true" style="margin-right:4px;"></i>Mitglieder
+    </button>
+  </div>`;
+  app.innerHTML = tabs + (S.view === 'public' ? renderPublicView() : renderMemberView());
+}
+
+window.setState = setState;
+window.addShift = addShift;
+window.removeShift = removeShift;
+window.checkPin = function() {
+  const f = document.getElementById('pin-field');
+  const v = f ? f.value : '';
+  if (v === PIN) setState({ pinAuthenticated: true, pinError: false });
+  else setState({ pinError: true });
+};
+window.prevWeek = () => { const d = new Date(S.memberWeekMonday); d.setDate(d.getDate()-7); setState({memberWeekMonday:d}); };
+window.nextWeek = () => { const d = new Date(S.memberWeekMonday); d.setDate(d.getDate()+7); setState({memberWeekMonday:d}); };
+
+render();
+</script>
+</body>
+</html>
