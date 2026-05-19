@@ -214,8 +214,8 @@
 
 <script>
 // ── Konfiguration ──────────────────────────────────────────
-const PIN = "1997";          // ← PIN hier ändern
-const VEREINSNAME = "Bürgeraktion Bessungen Ludwigshöhe";   // ← Vereinsname hier anpassen
+const PIN = "1234";          // ← PIN hier ändern
+const VEREINSNAME = "Unser Verein";   // ← Vereinsname hier anpassen
 const STORAGE_KEY = "turmdienst_v2";
 // ──────────────────────────────────────────────────────────
 
@@ -296,32 +296,36 @@ function renderPublicView() {
     m.setDate(m.getDate() + w * 7);
     weeks.push(m);
   }
-  const weekBlocks = weeks.map(monday => {
+
+  const openDays = [];
+  weeks.forEach(monday => {
     const sat = getSaturday(monday), sun = getSunday(monday);
     const satShifts = S.data[isoDate(sat)] || [];
     const sunShifts = S.data[isoDate(sun)] || [];
-    const dayHtml = (name, dateObj, shifts) => {
-      const list = shifts.length
-        ? shifts.map(s => `<div class="public-shift-entry"><i class="ti ti-user" style="font-size:13px;vertical-align:-1px;margin-right:4px;" aria-hidden="true"></i>${s.name}${s.from && s.to ? ` <span style="color:#888780;font-size:12px;">${s.from}–${s.to} Uhr</span>` : ''}</div>`).join('')
-        : `<div class="no-shifts-hint">Noch niemand eingetragen</div>`;
-      const badge = shifts.length
-        ? `<span class="badge badge-open"><i class="ti ti-check" aria-hidden="true"></i> Geöffnet</span>`
-        : `<span class="badge badge-closed"><i class="ti ti-clock" aria-hidden="true"></i> Offen</span>`;
-      return `<div class="public-day">
+    if (satShifts.length) openDays.push({ name: "Samstag", dateObj: sat, shifts: satShifts });
+    if (sunShifts.length) openDays.push({ name: "Sonntag", dateObj: sun, shifts: sunShifts });
+  });
+
+  const dayCards = openDays.map(({ name, dateObj, shifts }) => {
+    const timeEntries = shifts.map(s => {
+      if (s.from && s.to) return `<div class="public-shift-entry"><i class="ti ti-clock" style="font-size:13px;vertical-align:-1px;margin-right:5px;" aria-hidden="true"></i>${s.from}–${s.to} Uhr</div>`;
+      return `<div class="public-shift-entry"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;margin-right:5px;" aria-hidden="true"></i>Geöffnet</div>`;
+    }).join('');
+    return `<div class="card" style="margin-bottom:0.75rem;">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
         <div class="public-day-date">
           <div class="public-day-dayname">${name}</div>
           <div class="public-day-datestr">${formatDate(dateObj)}</div>
         </div>
-        <div class="public-shifts">${list}</div>
-        <div>${badge}</div>
-      </div>`;
-    };
-    return `<div class="card" style="margin-bottom:0.75rem;">
-      <div style="font-size:12px;font-weight:500;color:#888780;margin-bottom:0.75rem;">KW ${getKW(monday)} — ${formatDateShort(sat)}. &amp; ${formatDateShort(sun)}.${sat.getFullYear()}</div>
-      ${dayHtml("Samstag", sat, satShifts)}
-      ${dayHtml("Sonntag", sun, sunShifts)}
+        <div class="public-shifts" style="flex:1;">${timeEntries}</div>
+        <span class="badge badge-open"><i class="ti ti-check" aria-hidden="true"></i> Geöffnet</span>
+      </div>
     </div>`;
   }).join('');
+
+  const emptyHint = openDays.length === 0
+    ? `<div class="card" style="text-align:center;padding:2rem;color:#888780;font-size:14px;"><i class="ti ti-calendar-off" style="font-size:24px;display:block;margin-bottom:8px;" aria-hidden="true"></i>Für die nächsten 4 Wochen sind noch keine Öffnungszeiten eingetragen.</div>`
+    : '';
 
   return `
     <div class="public-header">
@@ -329,7 +333,7 @@ function renderPublicView() {
       <div class="public-title">Turm-Öffnungszeiten</div>
       <div class="public-subtitle">${VEREINSNAME} · Nächste 4 Wochen</div>
     </div>
-    ${weekBlocks}
+    ${dayCards}${emptyHint}
     <div class="qr-hint"><i class="ti ti-info-circle" aria-hidden="true"></i> Eintragungen durch Vereinsmitglieder. Stand: täglich aktuell.</div>`;
 }
 
